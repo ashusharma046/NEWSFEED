@@ -9,6 +9,7 @@
 #import "RootViewController.h"
 #import "ITEM.h"
 #import "DetailViewController.h"
+#import "NewFeedAppDelegate.h"
 @implementation RootViewController
 @synthesize filteredListContent, savedSearchTerm, savedScopeButtonIndex, searchWasActive;
 - (void)viewDidLoad
@@ -33,6 +34,49 @@
         self.savedSearchTerm = nil;
     }
 	
+    int i;
+    for(i=0;i<[objArray count];i++){
+        ITEM *item1=[objArray objectAtIndex:i];
+        
+        
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask,YES);
+        NSString *documentsDirectory = [paths objectAtIndex:0];
+        //NSString *directory = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject];
+        NSString *savedImagePath = [documentsDirectory stringByAppendingPathComponent:@"Images"];
+        
+        
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        
+        if (![fileManager fileExistsAtPath:savedImagePath]){
+            [fileManager createDirectoryAtPath:savedImagePath withIntermediateDirectories:NO attributes:nil error:nil];
+        }
+        
+        NSURL *url = [NSURL URLWithString:item1.media];
+        
+        NSURLRequest *request = [NSURLRequest requestWithURL:url];
+        NSURLResponse *response;
+        NSError *error;
+        NSData *imageData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+        NSString *imageName = [NSString stringWithFormat:@"Image_%d.jpeg",i];
+        
+        NSLog(@"image ---------name is %@",imageName);
+        
+        
+        
+        
+        
+        if(imageData){
+            NSString *getImagePath = [savedImagePath stringByAppendingPathComponent:imageName];
+         
+            [fileManager createFileAtPath:getImagePath contents:imageData attributes:nil]; 
+        }
+        
+        
+
+        
+    }
+    
+    
 	[self.tableView reloadData];
 	self.tableView.scrollEnabled = YES;
     self.title=@"RSS FEEDS";
@@ -82,7 +126,9 @@
         }
         if([elementName isEqualToString:@"media:content"]){
             item.media=[attributeDict objectForKey:@"url"];
-        }
+            
+                       
+}
 } 
     
  -(void)parser:(NSXMLParser *)parser foundCharacters:(NSString *)string{
@@ -110,13 +156,13 @@
         {
             item.media=string;
             
-        }  
+                  }  
         
         
 }
     
  -(void)parser:(NSXMLParser *)parser didEndElement:(NSString *)elementName namespaceURI:(NSString *)namespaceURI qualifiedName:(NSString *)qName{
-        NSLog(@"did end elemnt --%@",elementName);
+        //NSLog(@"did end elemnt --%@",elementName);
         if([elementName isEqualToString:@"item"])
         {
             [objArray addObject:item];
@@ -182,12 +228,20 @@
 
     cell.textLabel.text=it.title;
     NSURL *url = [NSURL URLWithString:it.media];
-    NSData *data = [NSData dataWithContentsOfURL:url];
-    cell.imageView.image=[UIImage imageWithData:data];
+   
     cell.textLabel.lineBreakMode = UILineBreakModeWordWrap;
     cell.textLabel.numberOfLines = 0;
     cell.textLabel.font = [UIFont systemFontOfSize:12.0f];
-
+       
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,NSUserDomainMask,YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString *savedImagePath = [documentsDirectory stringByAppendingPathComponent:@"Images"];
+    NSString *imageName = [NSString stringWithFormat:@"Image_%d.jpeg",indexPath.row];
+     
+    NSString *getImagePath = [savedImagePath stringByAppendingPathComponent:imageName];
+    NSLog(@"celll image is %@",getImagePath);
+    cell.imageView.image=[UIImage imageWithContentsOfFile:getImagePath];
+  
     return cell;
 }
 
